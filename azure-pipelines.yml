@@ -1,0 +1,48 @@
+# azure-pipelines.yml
+# Pipeline de Build (CI) para a API de Produtos Spring Boot
+
+trigger:
+- main # A pipeline será acionada automaticamente em cada push para a branch 'main'
+
+pool:
+  vmImage: 'ubuntu-latest' # Usamos um agente Linux, que é comum para builds Java/Maven
+
+variables:
+  # Definindo variáveis para reuso e facilidade de manutenção
+  JAVA_VERSION: '21'
+  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository # Pasta para cache de dependências Maven
+  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)' # Opções para Maven usar o cache
+  BUILD_ARTIFACT_NAME: 'apiprodutos-artifact' # Nome do artefato que será publicado
+
+steps:
+- task: JavaToolInstaller@0 # Instala o JDK (Java Development Kit) na versão especificada
+  inputs:
+    versionSpec: $(JAVA_VERSION)
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled' # Para usar um JDK pré-instalado no agente, se disponível
+    preferLatestVersion: true
+  displayName: 'Instalar JDK $(JAVA_VERSION)'
+
+- task: Maven@4 # Tarefa para executar comandos Maven
+  inputs:
+    mavenPomFile: 'pom.xml' # Caminho para o seu arquivo pom.xml
+    goals: 'clean package' # Objetivos do Maven: limpar e empacotar
+    publishJUnitResults: true # Publicar resultados de testes JUnit (se houver)
+    testResultsFiles: '**/surefire-reports/TEST-*.xml' # Padrão dos arquivos de resultados de teste
+    javaHomeOption: 'JDKVersion' # Usar a versão do JDK instalada pela tarefa JavaToolInstaller
+    jdkVersionOption: '$(JAVA_VERSION)'
+    mavenSetM2Home: true
+    mavenOpts: $(MAVEN_OPTS) # Usar as opções de cache
+  displayName: 'Compilar e Empacotar com Maven'
+
+- task: CopyFiles@2 # Copia os arquivos JAR gerados para um diretório de staging
+  inputs:
+    contents: '**/*.jar' # Copia todos os arquivos .jar
+    targetFolder: '$(Build.ArtifactStagingDirectory)' # Diretório temporário para artefatos
+  displayName: 'Copiar JAR para Staging'
+
+- task: PublishBuildArtifacts@1 # Publica os artefatos para que possam ser usados pela pipeline de Release
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)' # Caminho para os arquivos a serem publicados
+    artifactName: $(BUILD_ARTIFACT_NAME) # Nome do artefato
+  displayName: 'Publicar Artefato de Build'
