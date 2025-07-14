@@ -7,7 +7,12 @@ trigger:
       - main # 'main'/producao
       - hm # homol
 
-
+pr:
+  branches:
+    include:
+      - main
+      - hm
+      
 pool:
   name: Default
   demands:
