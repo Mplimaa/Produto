@@ -5,7 +5,7 @@ trigger:
   branches:
     include:
       - hm # homol
-      - main # A pipeline será acionada automaticamente em cada push para a branch 'main'/producao
+      - main # 'main'/producao
 
 
 pool:
