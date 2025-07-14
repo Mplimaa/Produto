@@ -4,8 +4,8 @@
 trigger:
   branches:
     include:
-      - hm # homol
       - main # 'main'/producao
+      - hm # homol
 
 
 pool:
