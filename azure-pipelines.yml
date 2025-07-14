@@ -5,7 +5,9 @@ trigger:
 - main # A pipeline será acionada automaticamente em cada push para a branch 'main'
 
 pool:
-  vmImage: 'ubuntu-latest' # Usamos um agente Linux, que é comum para builds Java/Maven
+  name: Default
+  demands:
+        - agent.name -equals michele-token
 
 variables:
   # Definindo variáveis para reuso e facilidade de manutenção
