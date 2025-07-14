@@ -2,8 +2,12 @@ Pipeline Azure DevOps
 
 Este arquivo descreve passo a passo o pipeline de build (CI) configurado para a API de Produtos Spring Boot, definido no arquivo azure-pipelines.yml.
 
+
+
 Descrição Geral
 Este pipeline realiza a integração contínua da API, compilando, testando e gerando o artefato da aplicação.
+
+
 
 Gatilhos (Triggers)
 yaml
@@ -22,6 +26,8 @@ pr:
       - hm
 O pipeline é disparado automaticamente em commits (trigger) e Pull Requests (pr) nas branches main e hm.
 
+
+
 Pool e Agente
 yaml
 Copiar
@@ -31,6 +37,8 @@ pool:
   demands:
         - agent.name -equals michele-token
 Define o pool de agentes onde o pipeline será executado.
+
+
 
 Especifica a demanda para usar um agente chamado michele-token.
 
@@ -45,13 +53,22 @@ variables:
   BUILD_ARTIFACT_NAME: 'apiprodutos-artifact'
 Variáveis reutilizáveis para facilitar a manutenção:
 
+
+
 Versão do Java (JAVA_VERSION)
+
+
 
 Local para cache das dependências Maven
 
+
+
 Opções para Maven usar o cache local
 
+
+
 Nome do artefato que será gerado
+
 
 Passos do Pipeline
 1. Instalar JDK
@@ -68,6 +85,8 @@ Editar
 Instala o Java Development Kit na versão 21.
 
 Usa um JDK pré-instalado no agente se disponível.
+
+
 
 2. Compilar e Empacotar com Maven
 yaml
@@ -90,6 +109,8 @@ Publica resultados dos testes JUnit.
 
 Utiliza o cache configurado para acelerar builds.
 
+
+
 3. Copiar arquivos JAR para Staging
 yaml
 Copiar
@@ -100,6 +121,8 @@ Editar
     targetFolder: '$(Build.ArtifactStagingDirectory)'
   displayName: 'Copiar JAR para Staging'
 Copia os arquivos .jar gerados para a pasta de staging de artefatos.
+
+
 
 4. Publicar Artefato de Build
 yaml
