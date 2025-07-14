@@ -4,8 +4,8 @@
 trigger:
   branches:
     include:
-      - main # 'main'/producao
-      - hm # homol
+      - main 
+      - hm
 
 pr:
   branches:
