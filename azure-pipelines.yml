@@ -2,7 +2,11 @@
 # Pipeline de Build (CI) para a API de Produtos Spring Boot
 
 trigger:
-- main # A pipeline será acionada automaticamente em cada push para a branch 'main'
+  branches:
+    include:
+      - develop # homol
+      - main # A pipeline será acionada automaticamente em cada push para a branch 'main'/producao
+
 
 pool:
   name: Default
