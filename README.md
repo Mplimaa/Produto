@@ -105,7 +105,7 @@ Editar
   displayName: 'Compilar e Empacotar com Maven'
 Executa o Maven para limpar e empacotar o projeto.
 
-Publica resultados dos testes JUnit.
+Publica resultados dos testes JUnit(se houver, o que não é o caso deste repositório!).
 
 Utiliza o cache configurado para acelerar builds.
 
