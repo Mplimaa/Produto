@@ -135,3 +135,11 @@ Editar
   displayName: 'Publicar Artefato de Build'
 Publica o artefato para ser usado nas etapas seguintes do processo (como o Release).
 
+
+
+5. Adicionar Realeases para implantar, pode ser automático e/ou manual(dependo do fluxo ou objetivo) após termino da build.
+
+   
+
+7. Depoly manual ou automárico, pode adicionar notificação por e-mail, e pode ser feito testes pós deploy.
+
