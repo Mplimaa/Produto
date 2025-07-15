@@ -1,10 +1,10 @@
 # azure-pipelines.yml
-# Pipeline de Build (CI) para a API de Produtos Spring Boot
+# CI/CD para API de Produtos Spring Boot
 
 trigger:
   branches:
     include:
-      - main 
+      - main
       - hm
 
 pr:
@@ -12,48 +12,95 @@ pr:
     include:
       - main
       - hm
-      
+
+variables:
+  JAVA_VERSION: '21'
+  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+  BUILD_ARTIFACT_NAME: 'apiprodutos-artifact'
+
 pool:
   name: Default
   demands:
-        - agent.name -equals michele-token
+    - agent.name -equals michele-token
 
-variables:
-  # Definindo variáveis para reuso e facilidade de manutenção
-  JAVA_VERSION: '21'
-  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository # Pasta para cache de dependências Maven
-  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)' # Opções para Maven usar o cache
-  BUILD_ARTIFACT_NAME: 'apiprodutos-artifact' # Nome do artefato que será publicado
+# ========================
+# STAGES
+# ========================
 
-steps:
-- task: JavaToolInstaller@0 # Instala o JDK (Java Development Kit) na versão especificada
-  inputs:
-    versionSpec: $(JAVA_VERSION)
-    jdkArchitectureOption: 'x64'
-    jdkSourceOption: 'PreInstalled' # Para usar um JDK pré-instalado no agente, se disponível
-    preferLatestVersion: true
-  displayName: 'Instalar JDK $(JAVA_VERSION)'
+stages:
 
-- task: Maven@4 # Tarefa para executar comandos Maven
-  inputs:
-    mavenPomFile: 'pom.xml' # Caminho para o seu arquivo pom.xml
-    goals: 'clean package' # Objetivos do Maven: limpar e empacotar
-    publishJUnitResults: true # Publicar resultados de testes JUnit (se houver)
-    testResultsFiles: '**/surefire-reports/TEST-*.xml' # Padrão dos arquivos de resultados de teste
-    javaHomeOption: 'JDKVersion' # Usar a versão do JDK instalada pela tarefa JavaToolInstaller
-    jdkVersionOption: '$(JAVA_VERSION)'
-    mavenSetM2Home: true
-    mavenOpts: $(MAVEN_OPTS) # Usar as opções de cache
-  displayName: 'Compilar e Empacotar com Maven'
+# -------- BUILD --------
+- stage: Build
+  displayName: 'Build do Projeto'
+  jobs:
+  - job: BuildJob
+    displayName: 'Compilar e Publicar Artefato'
+    steps:
+    - task: JavaToolInstaller@0
+      inputs:
+        versionSpec: $(JAVA_VERSION)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+        preferLatestVersion: true
+      displayName: 'Instalar JDK $(JAVA_VERSION)'
 
-- task: CopyFiles@2 # Copia os arquivos JAR gerados para um diretório de staging
-  inputs:
-    contents: '**/*.jar' # Copia todos os arquivos .jar
-    targetFolder: '$(Build.ArtifactStagingDirectory)' # Diretório temporário para artefatos
-  displayName: 'Copiar JAR para Staging'
+    - task: Maven@4
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'clean package'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '$(JAVA_VERSION)'
+        mavenSetM2Home: true
+        mavenOpts: $(MAVEN_OPTS)
+      displayName: 'Compilar e Empacotar com Maven'
 
-- task: PublishBuildArtifacts@1 # Publica os artefatos para que possam ser usados pela pipeline de Release
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)' # Caminho para os arquivos a serem publicados
-    artifactName: $(BUILD_ARTIFACT_NAME) # Nome do artefato
-  displayName: 'Publicar Artefato de Build'
+    - task: CopyFiles@2
+      inputs:
+        contents: '**/*.jar'
+        targetFolder: '$(Build.ArtifactStagingDirectory)'
+      displayName: 'Copiar JAR para Staging'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: $(BUILD_ARTIFACT_NAME)
+      displayName: 'Publicar Artefato de Build'
+
+
+# -------- HOMOLOGAÇÃO --------
+- stage: Homologacao
+  displayName: 'Deploy Homologação'
+  dependsOn: Build
+  condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/hm'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'))
+  jobs:
+  - job: DeployHomologacao
+    displayName: 'Deploy para ambiente de homologação'
+    steps:
+    - download: current
+      artifact: $(BUILD_ARTIFACT_NAME)
+
+    - script: |
+        echo ">>> INICIANDO DEPLOY DE HOMOLOGAÇÃO"
+        echo "Aqui você colocaria comandos reais para subir o .jar em seu ambiente hm"
+      displayName: 'Deploy para Homologação'
+
+
+# -------- PRODUÇÃO --------
+- stage: Producao
+  displayName: 'Deploy Produção'
+  dependsOn: Build
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+  jobs:
+  - job: DeployProducao
+    displayName: 'Deploy para ambiente de produção'
+    steps:
+    - download: current
+      artifact: $(BUILD_ARTIFACT_NAME)
+
+    - script: |
+        echo ">>> INICIANDO DEPLOY DE PRODUÇÃO"
+        echo "Aqui você colocaria comandos reais para subir o .jar em seu ambiente de produção"
+      displayName: 'Deploy para Produção'
